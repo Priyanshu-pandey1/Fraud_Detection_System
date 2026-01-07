@@ -1,6 +1,6 @@
 # 🛡️ Enterprise Financial Fraud Detection System
 
-**Live Demo:** [View the App Here](https://frauddetectionsystem-6bkfsscv8svno4cucjysej.streamlit.app/)
+## 🚀 [Live Demo: Click Here to View the App](https://frauddetectionsystem-6bkfsscv8svno4cucjysej.streamlit.app/)
 
 ## 📌 Project Overview
 In the banking industry, missing a single fraudulent transaction is far more costly than a false alarm. This project implements a high-recall **Fraud Detection Engine** capable of scanning credit card transactions for suspicious patterns in real-time. 
