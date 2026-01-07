@@ -1,70 +1,60 @@
 import streamlit as st
 import joblib
 import numpy as np
+import pandas as pd
 
 # 1. Load the AI "Brain"
 ai_brain = joblib.load('fraud_model.pkl')
 
-# 2. Page Config & Style
-st.set_page_config(page_title="FraudGuard AI Demo", page_icon="🛡️")
+st.set_page_config(page_title="Professional Fraud Engine", layout="wide")
 
-st.title("🛡️ FraudGuard: AI Transaction Security")
-st.write("""
-This system uses Machine Learning to scan bank transactions for theft. 
-**Try the 'Quick Test' buttons below** to see how the AI reacts to different behaviors!
-""")
+st.title("🛡️ Enterprise Fraud Detection Dashboard")
+st.write("This interface allows full control over all 30 PCA-transformed features from the original dataset.")
 
-# --- NEW: INTERVIEWER QUICK-TEST BUTTONS ---
-st.subheader("🚀 Quick Test Scenarios")
-col_a, col_b = st.columns(2)
+# --- SIDEBAR: PRIMARY CONTROLS ---
+st.sidebar.header("Main Transaction Data")
+money = st.sidebar.number_input("Transaction Amount ($)", min_value=0.0, value=125.0)
+time_val = st.sidebar.number_input("Time (Seconds)", min_value=0, value=400)
 
-with col_a:
-    if st.button("✅ Load Normal Transaction"):
-        st.session_state.money = 50.0
-        st.session_state.v14 = 0.5
-        st.session_state.v17 = 0.2
-        st.toast("Normal data loaded!")
+# --- MAIN AREA: ALL 28 V-FEATURES ---
+st.subheader("Neural Pattern Analysis (V1 - V28)")
+st.info("Adjust the sliders below to simulate different transaction patterns.")
 
-with col_b:
-    if st.button("🚨 Load Suspicious Transaction"):
-        st.session_state.money = 999.0
-        st.session_state.v14 = -12.0
-        st.session_state.v17 = -8.5
-        st.toast("Fraudulent pattern loaded!")
+# We create 4 columns to fit all 28 sliders neatly
+cols = st.columns(4)
+v_values = []
 
+for i in range(1, 29):
+    with cols[(i-1) % 4]:
+        # We create a slider for each V-feature from V1 to V28
+        val = st.slider(f"Feature V{i}", -20.0, 20.0, 0.0, help=f"Adjust the weight of component V{i}")
+        v_values.append(val)
+
+# --- PREDICTION LOGIC ---
 st.divider()
 
-# --- INPUT SECTION ---
-st.subheader("Manual Data Entry")
-
-# Using session_state so the buttons above can fill these boxes automatically
-money = st.number_input("Transaction Amount ($)", min_value=0.0, key="money")
-
-with st.expander("Show Advanced Security Patterns"):
-    st.write("These patterns are calculated by the bank based on location, device, and history.")
-    v14 = st.number_input("Security Signal A (V14)", help="Usually a positive number for safe users. Deep negatives suggest a stolen card.", key="v14")
-    v17 = st.number_input("Security Signal B (V17)", help="Measures if the location matches the user's home city.", key="v17")
-
-# --- ANALYSIS ---
-if st.button("🔍 Run Security Scan"):
-    # Build the 30 features
-    features = [0.0] * 30
-    features[14] = v14
-    features[17] = v17
-    features[29] = money
+if st.button("🚀 Run Comprehensive Analysis", use_container_width=True):
+    # Assemble the full list: Time + V1-V28 + Amount = 30 features
+    # Order: Time, V1, V2 ... V28, Amount
+    full_feature_list = [time_val] + v_values + [money]
     
-    final_data = np.array([features])
+    final_data = np.array([full_feature_list])
     
-    # Get Results
+    # Get Prediction
     prediction = ai_brain.predict(final_data)[0]
     risk_score = ai_brain.predict_proba(final_data)[0][1]
+
+    # Display Results in a clean layout
+    res_col1, res_col2 = st.columns(2)
     
-    st.subheader("Result:")
-    if prediction == 1 or risk_score > 0.15:
-        st.error(f"🚨 **FRAUD ALERT DETECTED**")
+    with res_col1:
+        st.metric("Risk Probability", f"{risk_score:.2%}")
         st.progress(risk_score)
-        st.write(f"**Risk Level:** {risk_score:.1%} - The system has flagged this as highly suspicious.")
-    else:
-        st.success(f"✅ **TRANSACTION AUTHORIZED**")
-        st.progress(risk_score)
-        st.write(f"**Risk Level:** {risk_score:.1%} - Pattern matches standard user behavior.")
+
+    with res_col2:
+        if prediction == 1 or risk_score > 0.15:
+            st.error("### 🚨 RESULT: FRAUD DETECTED")
+            st.write("The multi-dimensional pattern matches high-risk fraudulent behavior.")
+        else:
+            st.success("### ✅ RESULT: LEGITIMATE")
+            st.write("The transaction profile is within normal behavioral parameters.")
